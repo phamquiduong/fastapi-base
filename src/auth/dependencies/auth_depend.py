@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from auth.crud.role_crud import get_role
 from auth.crud.user_crud import get_user
-from auth.models.user_role_model import UserModel
+from auth.models import UserModel
 from core.dependencies.db_depend import get_session
 from core.helper.token_helper import access_token_helper
 
@@ -16,9 +16,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
     try:
         user_id: str = access_token_helper.auth_token(token)
-        return get_user(session=session, user_id=user_id)
     except Exception as error:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(error))
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(error)) from error
+
+    user = get_user(session=session, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return user
 
 
 async def get_current_active_user(current_user: Annotated[UserModel, Depends(get_current_user)]):

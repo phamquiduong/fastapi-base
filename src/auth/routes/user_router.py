@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from auth.crud.user_crud import delete_user, update_user
 from auth.dependencies.auth_depend import get_current_active_user
-from auth.models.user_role_model import UserModel
+from auth.models import UserModel
 from auth.schemas.role_schema import RoleOutSchema
 from auth.schemas.user_schema import UserOutSchema, UserUpdateSchema
 from core.dependencies.db_depend import get_session

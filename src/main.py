@@ -7,7 +7,9 @@ from fastapi.responses import JSONResponse
 
 from auth.routes import admin_route, auth_route, user_route
 from auth.routes.auth_router import auth_route
-from core.schemas.error_schema import (FieldErrorSchema, HTTPExceptionSchema,
+from core.constants.error_response import ERRORS
+from core.schemas.error_schema import (FieldErrorSchema, HTTPException,
+                                       HTTPExceptionSchema,
                                        RequestValidationErrorSchema)
 from database.create_admin_user import create_admin_user
 from database.migrate import Migration
@@ -23,6 +25,16 @@ app.include_router(admin_route)
 
 
 # Custom error handler
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_, error: HTTPException):
+    error_code = error.error_code
+    status_code = int(error_code[4:7])
+
+    return JSONResponse(status_code=status_code,
+                        content=HTTPExceptionSchema(error_code=error_code,
+                                                    detail=ERRORS[error_code]).dict())
+
+
 @app.exception_handler(500)
 async def internal_exception_handler(_, error: Exception):
     return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -30,7 +42,7 @@ async def internal_exception_handler(_, error: Exception):
 
 
 @app.exception_handler(RequestValidationError)
-async def custom_form_validation_error(request, exc):
+async def custom_form_validation_error(_, exc):
     request_validation_error = RequestValidationErrorSchema()
 
     for pydantic_error in exc.errors():

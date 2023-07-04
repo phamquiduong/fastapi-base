@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
 
-from auth.models.user_role_model import UserModel
+from auth.models import UserModel
 from core.helper.jwt_helper import jwt_helper
 from core.settings import settings
 

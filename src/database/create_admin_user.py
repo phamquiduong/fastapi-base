@@ -15,7 +15,7 @@ def create_admin_user():
         user_in = UserInSchema(email=email, password=password)
         user = get_or_create_user(session=session, user=user_in)
 
-        admin_role = get_role(session=session, role_name='admin', check_exist=False)
+        admin_role = get_role(session=session, role_name='admin')
         user.roles = [admin_role]
 
         session.commit()

@@ -1,12 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Path, Query, status
+from fastapi import (APIRouter, Body, Depends, HTTPException, Path, Query,
+                     status)
 from sqlalchemy.orm import Session
 
 from auth.crud.user_crud import (delete_user, get_user, get_users, update_user,
                                  update_user_add_role, update_user_remove_role)
 from auth.dependencies.auth_depend import get_current_admin_user
-from auth.models.user_role_model import UserModel
+from auth.models import UserModel
 from auth.schemas.role_schema import RoleEnum, RoleOutSchema
 from auth.schemas.user_schema import (UserOutSchema, UserRoleOutSchema,
                                       UserUpdateSchema)
@@ -26,7 +27,7 @@ admin_route = APIRouter(prefix='/users', tags=['Adminstrator'])
     500: {'model': HTTPExceptionSchema},
 })
 def admin_get_users(
-    admin_user: UserModel = Depends(get_current_admin_user),
+    _: UserModel = Depends(get_current_admin_user),
     ignore_admin: bool = Query(False),
     skip: int = Query(0, ge=0),
     limit: int = Query(10, gt=0, le=100),
@@ -47,11 +48,14 @@ def admin_get_users(
                      500: {'model': HTTPExceptionSchema},
                  })
 def admin_get_user(
-    admin_user: Annotated[UserModel, Depends(get_current_admin_user)],
+    _: Annotated[UserModel, Depends(get_current_admin_user)],
     user_id: Annotated[int, Path(..., gt=0)],
     session: Session = Depends(get_session),
 ):
     user = get_user(session=session, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     return {
         'user': user.__dict__,
         'roles': (role.__dict__ for role in user.roles)
@@ -67,7 +71,7 @@ def admin_get_user(
                      500: {'model': HTTPExceptionSchema},
                  })
 def admin_update_user(
-    admin_user: Annotated[UserModel, Depends(get_current_admin_user)],
+    _: Annotated[UserModel, Depends(get_current_admin_user)],
     user_id: Annotated[int, Path(..., gt=0)],
     user_update: Annotated[UserUpdateSchema, Body(...)],
     session: Session = Depends(get_session),
@@ -84,7 +88,7 @@ def admin_update_user(
                         500: {'model': HTTPExceptionSchema},
                     })
 def admin_delete_user(
-    admin_user: Annotated[UserModel, Depends(get_current_admin_user)],
+    _: Annotated[UserModel, Depends(get_current_admin_user)],
     user_id: Annotated[int, Path(..., gt=0)],
     session: Session = Depends(get_session),
 ):
@@ -100,7 +104,7 @@ def admin_delete_user(
     500: {'model': HTTPExceptionSchema}
 })
 def admin_add_user_role(
-    admin_user: Annotated[UserModel, Depends(get_current_admin_user)],
+    _: Annotated[UserModel, Depends(get_current_admin_user)],
     user_id: Annotated[int, Path(..., gt=0)],
     role_name: Annotated[RoleEnum, Body(...)],
     session: Session = Depends(get_session),
@@ -118,7 +122,7 @@ def admin_add_user_role(
     500: {'model': HTTPExceptionSchema}
 })
 def admin_remove_user_role(
-    admin_user: Annotated[UserModel, Depends(get_current_admin_user)],
+    _: Annotated[UserModel, Depends(get_current_admin_user)],
     user_id: Annotated[int, Path(..., gt=0)],
     role_name: Annotated[RoleEnum, Body(...)],
     session: Session = Depends(get_session),

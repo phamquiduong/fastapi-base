@@ -1,12 +1,21 @@
 from pydantic import BaseModel
 
 
+class HTTPException(Exception):
+    def __init__(self, error_code: str):
+        self.error_code = error_code
+
+
 class HTTPExceptionSchema(BaseModel):
+    error_code: str
     detail: str
 
     class Config:
         schema_extra = {
-            "example": {"detail": "I'm sorry.. It is an error.."},
+            "example": {
+                "error_code": "ERR_404",
+                "detail": "Object not found"
+            },
         }
 
 
@@ -17,27 +26,29 @@ class FieldErrorSchema(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "name": "field1",
+                "field": "field1",
                 "detail": "value is not a valid email address"
             },
         }
 
 
 class RequestValidationErrorSchema(BaseModel):
+    error_code: str
     detail: str = 'Request validation error'
-    fields: list[FieldErrorSchema] = []
+    errors: list[FieldErrorSchema] = []
 
     class Config:
         schema_extra = {
             "example": {
+                "error_code": "ERR_422",
                 "detail": "Request validation error",
-                "fields": [
+                "errors": [
                     {
-                        "name": "field1",
+                        "field": "email",
                         "detail": "value is not a valid email address"
                     },
                     {
-                        "name": "field2",
+                        "field": "password",
                         "detail": "field required"
                     }
                 ]
